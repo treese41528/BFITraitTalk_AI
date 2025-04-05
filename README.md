@@ -1,173 +1,274 @@
-# Conversational BFI Interviewer with Gemma 3
+   # BFITraitTalk_AI 💬🧠
 
-A Flask-based web application for conducting personality assessments using the Big Five Inventory (BFI) through a conversational interface powered by Google's Gemma 3 large language model.
+**A Conversational Big Five Personality Assessment Tool using Gemma 3**
+
+This Flask-based web application allows users to complete the Big Five Inventory (BFI) personality assessment through an interactive, conversational interface powered by Google's Gemma 3 large language model, running locally for privacy.
+
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+![Screenshot](assets/BFI_CHAT.png)
 
 ## Overview
 
-This application provides a conversational approach to completing the Big Five Inventory personality assessment. Instead of filling out a traditional form, users engage in a natural conversation with an AI interviewer that adapts questions, provides active listening, and guides the user through the assessment process.
+Instead of a traditional checkbox form, BFITraitTalk_AI uses a chat interface where users discuss their agreement with BFI statements. The AI ("Kaya"):
 
-Key features:
-- Split-screen interface with chat and dynamic questionnaire
-- Conversational administration of the BFI questionnaire
-- Real-time form updates as questions are answered
-- Comprehensive personality profile generation
-- Local model execution for privacy and data control
+* Asks questions based on the BFI sequence.
+* Engages in basic conversation (e.g., clarifying questions).
+* Interprets free-text responses to suggest a score (1-5 or skipped).
+* Asks for confirmation before recording the score.
+* Updates the questionnaire form visually in real-time.
+* Generates a comprehensive personality profile upon completion.
+
+The primary goal is to explore conversational AI for assessments while ensuring user data remains local.
 
 ## Technical Stack
 
-- **Backend**: Flask (Python)
-- **Frontend**: HTML, CSS, JavaScript
-- **LLM**: Google Gemma 3 (4B, 12B, or 27B parameter version)
-- **Libraries**: Transformers, PyTorch, BitsAndBytes
+* **Backend**: Flask (Python)
+* **Frontend**: HTML, CSS, Vanilla JavaScript
+* **LLM**: Google Gemma 3 (Instruction-Tuned variants: 4B, 12B, or 27B)
+* **Core Libraries**: Transformers, PyTorch, Accelerate, BitsAndBytes (for quantization)
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.8+
-- CUDA-compatible GPU (recommended, CPU is possible but slow)
-- Local Gemma 3 model files
+* **Python**: 3.9+ recommended (tested with 3.10)
+* **Git**: For cloning the repository.
+* **GPU**: An NVIDIA GPU with CUDA support is **highly recommended** for reasonable performance. Check the [Hardware Requirements](#hardware-requirements) below. CPU execution is possible but very slow.
+* **CUDA Toolkit & Drivers**: Ensure appropriate NVIDIA drivers and CUDA toolkit compatible with your PyTorch version are installed if using GPU.
 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/conversational-bfi-interviewer.git
-cd conversational-bfi-interviewer
+# Replace with your actual repo URL if different
+git clone git@github.com:treese41528/BFITraitTalk_AI.git
+cd BFITraitTalk_AI
 ```
 
-### Step 2: Create Virtual Environment
+### Step 2: Create and Activate Virtual Environment
+
+It's strongly recommended to use a virtual environment to manage dependencies.
 
 ```bash
+# Create the environment (use python3 or python depending on your system)
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate the environment:
+# Linux/macOS
+source venv/bin/activate
+# Windows (Git Bash/WSL)
+source venv/Scripts/activate
+# Windows (Command Prompt/PowerShell)
+.\venv\Scripts\activate
 ```
+
+(You should see (venv) at the start of your terminal prompt)
 
 ### Step 3: Install Dependencies
 
 ```bash
+# Upgrade pip (optional but good practice)
+pip install --upgrade pip
+# Install required packages
 pip install -r requirements.txt
 ```
 
-### Step 4: Set Up Local Models
+### Step 4: Download Gemma 3 Model Files
 
-Ensure your Gemma 3 models are correctly placed in the project structure:
+The large language models are not included in the repository. You need to download the desired Gemma 3 instruction-tuned model (e.g., gemma-3-4b-it).
+
+#### Method 1: Using the included downloader script (Recommended)
+
+This script uses the huggingface_hub library to download and place the model correctly. You might need to log in to Hugging Face Hub (huggingface-cli login).
+
+Run the script from the project root directory. Choose the size you need:
+
+```bash
+# Example: Download the 12B instruction-tuned model
+python utils/gemma_downloader.py --model_size 12b --variant it
+
+# Example: Download the 4B instruction-tuned model
+# python utils/gemma_downloader.py --model_size 4b --variant it
+```
+
+This will download the model into the data/hf_models/gemma-3-{size}-it/ directory. Note: These models are large (several GB) and may take time to download.
+
+#### Method 2: Manual Download
+
+Manually download the snapshot of the desired instruction-tuned model (e.g., google/gemma-3-4b-it) from the Hugging Face Hub.
+
+Ensure the downloaded files are placed within the correct subdirectory structure inside the data/hf_models/ folder:
 
 ```
-data/hf_models/
-├── gemma-3-4b-it/     # 4B parameter model
-├── gemma-3-12b-it/    # 12B parameter model
-└── gemma-3-27b-it/    # 27B parameter model
+BFITraitTalk_AI/
+└── data/
+    └── hf_models/
+        └── gemma-3-4b-it/    # Contains all files for the 4B IT model
+        └── gemma-3-12b-it/   # Contains all files for the 12B IT model
+        └── ...
 ```
-
-You only need one of these models to run the application. The 4B model is recommended for systems with limited GPU memory.
 
 ### Step 5: Configure the Application
 
-Edit `config.py` to set the appropriate model size and quantization level based on your hardware:
+Review and potentially edit config.py to match your downloaded model and hardware capabilities. Key settings:
 
 ```python
-# For systems with limited GPU memory (4-8GB VRAM)
-MODEL_SIZE = "4b"
+# Select the model size you downloaded (e.g., "4b", "12b")
+MODEL_SIZE = "12b"
+
+# Choose quantization ('4bit', '8bit', 'none') based on VRAM
+# '4bit' uses least memory, 'none' uses most but has highest quality
 QUANTIZATION = "4bit"
 
-# For systems with more GPU memory (16+ GB VRAM)
-# MODEL_SIZE = "12b"
-# QUANTIZATION = "8bit"
+# Device: 'auto' usually works. Can force 'cuda' or 'cpu'.
+DEVICE = "auto"
+
+# Enable Flash Attention 2 if installed and supported (usually faster on compatible GPUs)
+USE_FLASH_ATTENTION = True
 ```
+
+You can also override these using environment variables (see Configuration Options), but editing config.py is often simpler for local runs.
 
 ## Running the Application
 
-1. Start the Flask server:
+1. Make sure your virtual environment is activated (source venv/bin/activate or similar).
+
+2. Run the Flask application from the project root directory:
 
 ```bash
-python app.py
+python survey_app.py
 ```
 
-2. Open your web browser and navigate to:
+3. Wait for the model to load (this can take some time, especially on the first run or with larger models). You'll see log messages in the terminal.
 
-```
-http://localhost:5000
-```
+4. Once the server is running (it will typically say Running on http://127.0.0.1:5000 or similar), open your web browser and navigate to that address.
 
-3. Click the "Start Interview" button to begin the personality assessment.
+5. Click the "Start Interview" button.
 
 ## Usage
 
-1. The application presents a split-screen interface with a chat window on the left and the BFI questionnaire form on the right.
+1. Engage in conversation with the AI interviewer ("Kaya") in the left chat panel.
 
-2. Start the interview by clicking the "Start" button. The AI interviewer will introduce itself and begin asking questions.
+2. Answer the personality statements presented by the AI in your own words or by providing a number (1-5).
 
-3. Answer each question naturally in the chat. The AI will adapt its follow-up questions based on your responses.
+3. The AI will interpret your response, propose a score, and ask for confirmation ("Does that feel right?").
 
-4. As you answer questions, the form on the right will be automatically updated.
+4. Reply with "yes" or "no" to confirm or reject the proposed score. If you reject, the AI will ask for the correct score.
 
-5. You can also directly interact with the form by clicking on the Likert scale options (1-5).
+5. The BFI questionnaire form on the right panel will update in real-time as answers are confirmed.
 
-6. After completing all questions, you'll receive a comprehensive personality profile based on your responses.
+6. If you ask for clarification (e.g., "What does that mean?", "Can you give examples?"), the AI should attempt to explain and then re-ask the current question.
 
-## Configuration Options
+7. Once all questions are answered, a personality profile based on the BFI dimensions will be displayed in the right panel.
 
-You can customize the application behavior using environment variables:
+## Configuration Options (Environment Variables)
+
+You can override settings in config.py by setting environment variables before running python survey_app.py.
 
 ```bash
-# Model Configuration
-export GEMMA_MODEL_SIZE="4b"  # Options: "4b", "12b", "27b"
-export GEMMA_QUANTIZATION="4bit"  # Options: "none", "4bit", "8bit"
-export GEMMA_DEVICE="auto"  # Options: "auto", "cuda", "cpu"
-
-# Server Configuration
-export FLASK_HOST="0.0.0.0"
-export FLASK_PORT=5000
-export DEBUG_MODE=False
-
-# Logging Configuration
+# Example for Linux/macOS:
+export GEMMA_MODEL_SIZE="4b"
+export GEMMA_QUANTIZATION="4bit"
+export DEBUG_MODE="False"
 export LOG_LEVEL="INFO"
+python survey_app.py
+
+# Example for Windows (Command Prompt):
+set GEMMA_MODEL_SIZE=4b
+set GEMMA_QUANTIZATION=4bit
+set DEBUG_MODE=False
+set LOG_LEVEL=INFO
+python survey_app.py
+
+# Example for Windows (PowerShell):
+$env:GEMMA_MODEL_SIZE = "4b"
+$env:GEMMA_QUANTIZATION = "4bit"
+$env:DEBUG_MODE = "False"
+$env:LOG_LEVEL = "INFO"
+python survey_app.py
 ```
 
-## Hardware Requirements
+### Available Environment Variables:
 
-Different model sizes and quantization levels have different hardware requirements:
+* **GEMMA_MODEL_SIZE**: "4b", "12b", "27b"
+* **GEMMA_QUANTIZATION**: "none", "4bit", "8bit"
+* **GEMMA_DEVICE**: "auto", "cuda", "cpu"
+* **USE_FLASH_ATTENTION**: "True" or "False"
+* **FLASK_HOST**: Default "0.0.0.0"
+* **FLASK_PORT**: Default 5000
+* **DEBUG_MODE**: "True" or "False"
+* **LOG_LEVEL**: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+* **TEMPERATURE**, **TOP_P**, **MAX_NEW_TOKENS**: Control LLM generation parameters.
 
-| Model Size | Quantization | Minimum VRAM | Recommended VRAM |
-|------------|--------------|--------------|------------------|
-| 4B         | 4-bit        | 2 GB         | 4 GB             |
-| 4B         | 8-bit        | 4 GB         | 6 GB             |
-| 12B        | 4-bit        | 6 GB         | 8 GB             |
-| 12B        | 8-bit        | 12 GB        | 16 GB            |
-| 27B        | 4-bit        | 14 GB        | 16 GB            |
-| 27B        | 8-bit        | 27 GB        | 32 GB            |
+## Hardware Requirements (Approximate)
 
-The application can also run on CPU, but response times will be significantly slower.
+VRAM requirements depend heavily on quantization and model size. These are estimates:
+
+| Model Size | Quantization | Min VRAM | Rec. VRAM | Notes |
+|------------|--------------|----------|-----------|-------|
+| 4B | 4-bit | ~3 GB | 5 GB+ | Good starting point |
+| 4B | 8-bit | ~5 GB | 7 GB+ | |
+| 4B | none (BF16) | ~9 GB | 11 GB+ | |
+| 12B | 4-bit | ~7 GB | 10 GB+ | Good balance |
+| 12B | 8-bit | ~13 GB | 16 GB+ | |
+| 12B | none (BF16) | ~25 GB | 28 GB+ | Requires substantial VRAM |
+| 27B | 4-bit | ~15 GB | 18 GB+ | High-end consumer GPUs |
+| 27B | 8-bit | ~28 GB | 32 GB+ | Professional/Datacenter |
+| 27B | none (BF16) | ~55 GB | 60 GB+ | Multiple/High-end GPUs |
+
+* Running on CPU is possible (GEMMA_DEVICE=cpu) but will be very slow.
+* Actual usage may vary based on sequence length and other factors.
 
 ## Troubleshooting
 
-### "Out of memory" error
+* **CUDA Out of Memory Error**:
+  * Stop the app.
+  * Edit config.py: Lower MODEL_SIZE (e.g., "12b" -> "4b"), use more quantization (QUANTIZATION="4bit"), or try both.
+  * Restart the app: python survey_app.py.
+  * Ensure no other processes are using significant GPU memory.
 
-If you encounter CUDA out of memory errors:
-- Try using a smaller model (e.g., 4B instead of 12B)
-- Use more aggressive quantization (4-bit instead of 8-bit)
-- Reduce the maximum token length in the configuration
+* **Model Loading Errors** (OSError, HTTPError during download):
+  * Verify the model was downloaded correctly using the script or manually. Check the contents of the data/hf_models/gemma-3-{size}-it/ folder.
+  * Ensure you have sufficient disk space.
+  * Check file permissions in the data/ directory.
+  * If using the downloader script, ensure you are logged into Hugging Face Hub (huggingface-cli login).
+  * Check your internet connection if downloading.
 
-### Model loading errors
+* **Slow Responses**:
+  * Use a smaller model size or more quantization (see OOM error steps).
+  * Make sure GEMMA_DEVICE is set to cuda or auto if you have a compatible GPU. Check terminal logs for device placement information.
+  * Install Flash Attention 2 (pip install flash-attn --no-build-isolation) if your GPU supports it (check NVIDIA Ampere, Ada Lovelace, Hopper architectures) and ensure USE_FLASH_ATTENTION = True in config.py.
 
-If the model fails to load:
-- Check that the model files are correctly placed in the expected directory
-- Ensure you have sufficient disk space for the model files
-- Verify that you have the correct permissions to access the model files
+* **Incorrect Behavior / AI Not Following Instructions**:
+  * Check the terminal logs for errors or warnings from the application or the LLM handler.
+  * Experiment with generation parameters (TEMPERATURE, TOP_P) in config.py, although the defaults should generally work.
+  * Ensure the correct instruction-tuned model variant (-it) was downloaded.
 
-### Slow responses
-
-If the AI is responding slowly:
-- Try using a smaller model size
-- Ensure you're using GPU acceleration if available
-- Consider more aggressive quantization
+* **Web Interface Issues**:
+  * Clear your browser cache.
+  * Check the browser's developer console (usually F12) for JavaScript errors.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Copyright 2025 treese41528
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+(Please also ensure a file named LICENSE exists in the repository root containing the full Apache License 2.0 text).
 
 ## Acknowledgments
 
-- The Big Five Inventory (BFI) is a widely used personality assessment tool
-- Google's Gemma 3 models provide the conversational capabilities
-- This project is for educational purposes only and not intended for clinical use
+* The Big Five Inventory (BFI) questionnaire items used are based on standard public versions.
+* Powered by Google's Gemma 3 models.
+* Built with Flask, Transformers, PyTorch, and other open-source libraries.
+* This project is intended for educational and demonstration purposes only and is not a substitute for professional psychological assessment.
