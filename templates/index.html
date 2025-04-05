@@ -1,0 +1,114 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversational BFI Interviewer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Add a minimal favicon to prevent 404 errors -->
+    <link rel="icon" href="data:,">
+</head>
+<body>
+    <div class="container">
+        <!-- Chat Panel (Left Side) -->
+        <div class="panel chat-panel">
+            <div class="panel-header">
+                <h2>Interview Chat</h2>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%;" data-progress="0">0%</div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <!-- Initial welcome message -->
+                <div class="message system">
+                    Welcome to the Big Five Personality Assessment interview. I'll guide you through a series of questions 
+                    to understand your personality traits. Your answers will be used to fill in the questionnaire 
+                    on the right. Click the "Start Interview" button to begin.
+                </div>
+                
+                <!-- Messages will be added here dynamically -->
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <form id="chatForm">
+                    <input type="text" id="userInput" placeholder="Type your response here..." disabled>
+                    <button type="submit" id="sendButton" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+                
+                <div class="control-buttons">
+                    <button id="startButton" class="primary-button">Start Interview</button>
+                    <button id="resetButton" class="secondary-button" style="display: none;">Reset</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Panel (Right Side) -->
+        <div class="panel form-panel">
+            <div class="panel-header">
+                <h2>Big Five Inventory (BFI) Questionnaire</h2>
+                <div class="form-legend">
+                    <div class="scale-explanation">
+                        <span class="scale-item"><strong>1</strong>: Strongly Disagree</span>
+                        <span class="scale-item"><strong>2</strong>: Disagree</span>
+                        <span class="scale-item"><strong>3</strong>: Neutral</span>
+                        <span class="scale-item"><strong>4</strong>: Agree</span>
+                        <span class="scale-item"><strong>5</strong>: Strongly Agree</span>
+                        <span class="scale-item"><strong>S</strong>: Skipped</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="questions-container" id="questionsContainer">
+                <div id="resultsSection" class="results-section" style="display: none;">
+                    <h3>Your Big Five Personality Profile</h3>
+                    <div class="trait-results" id="traitResults">
+                        <!-- Results will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <!-- BFI Questions -->
+                {% for question in questions %}
+                <div class="question-item" id="question-{{ question.id }}" data-question-id="{{ question.id }}" data-trait="{{ question.trait|lower }}">
+                    <div class="question-text">
+                        <span class="question-number">{{ loop.index }}.</span>
+                        <span class="statement">I see myself as someone who {{ question.text }}</span>
+                        {% if question.reverse %}
+                        <span class="reverse-indicator">(R)</span>
+                        {% endif %}
+                        <span class="trait-badge {{ question.trait|lower }}">{{ question.trait }}</span>
+                    </div>
+                    
+                    <div class="likert-scale">
+                        {% for value in range(1, 6) %}
+                        <div class="scale-option" data-value="{{ value }}" data-question-id="{{ question.id }}">
+                            <span class="scale-number">{{ value }}</span>
+                        </div>
+                        {% endfor %}
+                        <div class="scale-option skip" data-value="skipped" data-question-id="{{ question.id }}">
+                            <span class="scale-number">S</span>
+                        </div>
+                    </div>
+                    
+                    <div class="answer-status" id="status-{{ question.id }}"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/interview.js') }}"></script>
+</body>
+</html>

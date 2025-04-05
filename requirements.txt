@@ -1,0 +1,36 @@
+# Core dependencies
+Flask==2.3.3
+Werkzeug==2.3.7
+Jinja2==3.1.2
+itsdangerous==2.1.2
+MarkupSafe==2.1.3
+click>=8.0.0
+
+# Model and ML dependencies
+torch>=2.1.0
+transformers>=4.38.0
+accelerate>=0.25.0
+bitsandbytes>=0.41.0
+safetensors>=0.4.0
+sentencepiece>=0.1.99
+protobuf>=4.25.0
+tokenizers>=0.14.0
+einops>=0.7.0
+optimum>=1.14.0
+peft>=0.6.0
+
+# Flash Attention and related packages
+flash-attn>=2.3.4
+triton>=2.1.0
+xformers>=0.0.22.post7
+
+# Utilities
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+scipy>=1.10.0
+regex>=2022.10.31
+tqdm>=4.65.0
+
+# Development tools
+python-dotenv>=1.0.0

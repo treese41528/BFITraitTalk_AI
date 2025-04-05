@@ -1,0 +1,48 @@
+# --- Python ---
+# Bytecode and Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual Environment Folders (if applicable)
+# Choose the one you use, or include all common names
+venv/
+.venv/
+env/
+ENV/
+*/__pypackages__/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor Files (optional, but recommended)
+.vscode/
+.idea/
+*.sublime-*
+
+# Secrets (if using a .env file)
+# .env
+
+# Log files
+*.log
+
+# --- Project Specific ---
+
+# Ignore Flask session files (created by Flask-Session)
+.flask_session/
+
+# --- IMPORTANT: Ignore downloaded Hugging Face models ---
+data/hf_models/
+
+# Example: Ignore other large data files or output directories if needed
+# data/large_results.csv
+# generated_reports/
