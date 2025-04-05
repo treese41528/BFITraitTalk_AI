@@ -88,7 +88,6 @@ class InterviewSessionManager:
 
     def create_session(self, session_id=None, randomize=None) -> Dict[str, Any]:
         """ Creates a new interview session. """
-        # (Implementation as before)
         if not self.questions_by_id: # Check the lookup dict
              logger.error("Cannot create session: No valid questions loaded into lookup.")
              return {'id': None, 'state': self.STATES['ERROR'], 'error': 'No valid questions loaded'}
@@ -123,7 +122,6 @@ class InterviewSessionManager:
 
     def start_interview(self, session_state: Dict[str, Any]) -> Dict[str, Any]:
         """ Starts the interview, setting the first question. """
-        # (Implementation as before)
         if not session_state or 'state' not in session_state:
              logger.error("Invalid session state passed to start_interview.")
              return session_state
@@ -157,7 +155,6 @@ class InterviewSessionManager:
         answer_value: Union[int, str]
     ) -> Dict[str, Any]:
         """ Records an answer, advances state, updates question IDs. """
-        # (Implementation as before)
         if not session_state or 'state' not in session_state:
              logger.error("Invalid session state passed to record_answer.")
              return session_state
@@ -217,7 +214,6 @@ class InterviewSessionManager:
         content: str
     ) -> Dict[str, Any]:
         """ Adds a message to the chat history. """
-        # (Implementation as before)
         if not session_state or 'chat_history' not in session_state or not isinstance(session_state['chat_history'], list):
             logger.error(f"Invalid session state or chat_history for add_message_to_history in session {session_state.get('id', 'N/A')}")
             return session_state
@@ -235,7 +231,6 @@ class InterviewSessionManager:
         logger.debug(f"Added {role} message to history. New length: {len(session_state['chat_history'])}")
         return session_state
 
-    # --- THIS IS THE MISSING METHOD ---
     def get_question_text_by_id(self, question_id: Optional[Union[int, str]]) -> Optional[str]:
         """
         Get the CORE text (statement part) of a question by its integer ID.
@@ -277,7 +272,6 @@ class InterviewSessionManager:
 
     def get_interview_stats(self, session_state: Dict[str, Any]) -> Dict[str, Any]:
         """ Get statistics about the interview progress. """
-        # (Implementation as before)
         default_stats = {
             'total_questions': 0, 'answered_count': 0, 'remaining_count': 0,
             'progress_percentage': 0, 'trait_coverage': {}, 'state': self.STATES['ERROR'],
@@ -332,7 +326,6 @@ class InterviewSessionManager:
 
     def update_session_state(self, session_state: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
         """ Apply multiple updates to the session state. """
-        # (Implementation as before)
         if not session_state: return {}
         protected_fields = ['id', 'started_at', 'chat_history']
         for field, value in updates.items():

@@ -1,7 +1,4 @@
 # survey_app.py
-
-# --- (Keep imports, logger setup, global vars, INITIAL_INTERVIEW_PROMPT,
-#      load_bfi_questions, initialize_components, create_app, index, start_interview) ---
 import re
 from flask import Flask, render_template, request, jsonify, session, current_app
 import json
@@ -46,11 +43,10 @@ Instructions:
 11. When all questions are done, provide a brief closing statement thanking the user.
 
 Let's begin the interview now. Please start with your introduction and the first question from the inventory.
-""" # Refined prompt slightly
+""" 
 
 def load_bfi_questions():
     """Load BFI questions from file, ensuring integer IDs."""
-    # ... (Implementation as before) ...
     fallback_questions = [{"id": 1, "text": "is talkative", "trait": "Extraversion", "reverse": False},{"id": 2, "text": "tends to find fault with others", "trait": "Agreeableness", "reverse": True},{"id": 3, "text": "does a thorough job", "trait": "Conscientiousness", "reverse": False},{"id": 4, "text": "is depressed, blue", "trait": "Neuroticism", "reverse": False},{"id": 5, "text": "is original, comes up with new ideas", "trait": "Openness", "reverse": False}]
     try:
         with open(config.BFI_QUESTIONS_PATH, 'r') as f: questions = json.load(f)
@@ -67,7 +63,6 @@ def load_bfi_questions():
 
 def initialize_components(app_instance):
     """Initialize all global components."""
-    # ... (Implementation as before) ...
     global model_manager, conversation_handler, session_manager, bfi_scorer, bfi_questions, response_parser
     is_valid, message = config.validate_config();
     if not is_valid: logger.error(f"Config validation failed: {message}"); return False
@@ -95,7 +90,6 @@ def initialize_components(app_instance):
 # --- App Factory Function ---
 def create_app():
     """Creates and configures the Flask application."""
-    # ... (Implementation as previously corrected, including Flask-Session setup) ...
     app = Flask(__name__)
     app.secret_key = config.SECRET_KEY if config.SECRET_KEY else secrets.token_hex(16)
     if not config.SECRET_KEY: logger.warning("Flask SECRET_KEY not set in config...")
@@ -114,7 +108,6 @@ def create_app():
     # --- Routes ---
     @app.route('/')
     def index():
-        # ... (Implementation as previously corrected) ...
         if not bfi_questions or not session_manager: return "Error: App not configured.", 500
         if 'session_state' not in session or not session.get('session_state'): session_state = session_manager.create_session(); session['session_state'] = session_state; sid = getattr(session, 'sid', 'N/A'); logger.info(f"Created new session: {sid}")
         else: session_state = session['session_state']; sid = getattr(session, 'sid', 'N/A'); logger.debug(f"Existing session: {sid}, State: {session_state.get('state', 'Unknown')}")
@@ -143,10 +136,9 @@ def create_app():
         # Otherwise, assume it's more conversational or a question
         return False
 
-    # --- start_interview needs no changes related to this error ---
+    # --- start_interview ---
     @app.route('/api/start', methods=['POST'])
     def start_interview():
-        # (Keep implementation from previous fix - it seemed correct)
         if not session_manager or not conversation_handler: return jsonify({'success': False, 'error': 'App not ready'}), 500
         session_state = session_manager.create_session(); sid = getattr(session, 'sid', 'N/A'); logger.info(f"Starting new interview via /api/start for {sid}.")
         session_state = session_manager.start_interview(session_state)
@@ -300,7 +292,6 @@ def create_app():
 
                 else: # Unclear confirmation - User said something other than yes/no
                     logger.info("User confirmation unclear. Acknowledging input and gently redirecting.")
-                    # *** NEW LOGIC FOR UNCLEAR CONFIRMATION ***
                     # Instead of just repeating, acknowledge and guide back.
                     instruction = f"""
                     I understand you might have more to say or questions, and I appreciate that.
@@ -317,7 +308,6 @@ def create_app():
                     )
                     # Remain in AWAITING_CONFIRMATION state, keep pending_answer
                     needs_generation = False
-                    # *** END NEW LOGIC ***
 
             elif current_internal_state == session_manager.STATES['IN_PROGRESS']:
                 logger.debug(f"State is IN_PROGRESS. Analyzing user response for QID {current_qid}.")
@@ -325,7 +315,6 @@ def create_app():
                 question_text_core = session_manager.get_question_text_by_id(target_qid)
 
                 if target_qid is None or question_text_core is None:
-                    # (Error handling as before)
                     logger.error("State IN_PROGRESS, but current_qid or text missing.")
                     ai_response_text = "Apologies, lost my place."
                     session_state['state'] = session_manager.STATES['ERROR']
@@ -333,10 +322,10 @@ def create_app():
                 else:
                     question_text_full = f"I see myself as someone who {question_text_core}"
 
-                    # *** NEW: Check if user response looks like a direct answer ***
+                    # *** Check if user response looks like a direct answer ***
                     if looks_like_direct_answer(user_message):
                         logger.debug(f"User message '{user_message}' looks like a direct answer. Proceeding to propose score.")
-                        # --- Proceed with score proposal logic (same as before) ---
+                        # --- Proceed with score proposal logic ---
                         instruction = f"""
                         Based on the user's last message ('{user_message}'), please:
                         1. Briefly acknowledge their response naturally (e.g., "Okay, got it.").
@@ -410,7 +399,7 @@ def create_app():
             session_state = session_manager.add_message_to_history(session_state, 'model', ai_response_text)
 
             # --- Final Save and Return ---
-            # (Save and return logic remains the same as the previous version)
+            # (Save and return logic)
             session['session_state'] = session_state
             logger.debug(f"Session state saved after processing chat for session {sid}")
             stats = session_manager.get_interview_stats(session_state)
@@ -435,7 +424,6 @@ def create_app():
 
         except Exception as e:
             logger.error(f"Critical error processing chat: {e}", exc_info=True)
-            # (Error handling as before)
             try:
                 if 'session_state' in session and isinstance(session['session_state'], dict):
                     session['session_state']['state'] = session_manager.STATES['ERROR']
@@ -451,7 +439,6 @@ def create_app():
     # --- Other Routes ---
     @app.route('/api/results', methods=['GET'])
     def get_results():
-         # ... (Implementation as previously corrected) ...
         if not bfi_scorer: return jsonify({'success': False, 'error': 'Results module not ready'}), 500
         if 'session_state' not in session or not isinstance(session.get('session_state'), dict): return jsonify({'error': 'No active session.'}), 400
         session_state = session['session_state']; sid = getattr(session, 'sid', 'N/A')
@@ -465,14 +452,12 @@ def create_app():
 
     @app.route('/clear_session')
     def clear_session_route():
-         # ... (Implementation as previously corrected) ...
         sid = getattr(session, 'sid', 'N/A'); session.clear(); logger.info(f"Session {sid} cleared by request.")
         return "Session cleared. <a href='/'>Return to home</a>"
 
 
     @app.route('/model_info')
     def model_info():
-         # ... (Implementation as previously corrected) ...
          if not model_manager: return jsonify({'success': False,'error': 'Model manager not initialized'}), 500
          try: info = model_manager.get_model_info(); return jsonify({'success': True, 'model_info': info})
          except Exception as e: logger.error(f"Error getting model info: {e}", exc_info=True); return jsonify({'success': False, 'error': 'Could not retrieve model info'}), 500

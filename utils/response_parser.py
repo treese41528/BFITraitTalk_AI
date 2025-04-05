@@ -66,7 +66,6 @@ class ResponseParser:
 
     def extract_confirmed_answer(self, text: str) -> Optional[Dict[str, Any]]:
         """ Extracts EXPLICIT score or skip confirmation from AI text. """
-        # (Keep implementation as before - this parses the AI's proposed score)
         if not text: return None
         text_lower = text.lower()
 
