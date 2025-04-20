@@ -13,24 +13,24 @@ DEBUG_MODE = os.environ.get("DEBUG_MODE", "True").lower() in ("true", "1", "t")
 LOCAL_MODELS_PATH = os.environ.get("LOCAL_MODELS_PATH", "data/hf_models")
 
 # Model size to use: '4b', '12b', or '27b'
-MODEL_SIZE = os.environ.get("GEMMA_MODEL_SIZE", "12b")
+MODEL_SIZE = os.environ.get("GEMMA_MODEL_SIZE", "4b")
 
 # Quantization level: 'none', '4bit', or '8bit'
-QUANTIZATION = os.environ.get("GEMMA_QUANTIZATION", "4bit")
+QUANTIZATION = os.environ.get("GEMMA_QUANTIZATION", "none")
 
 # Device for model placement: 'auto', 'cuda', 'cpu'
 DEVICE = os.environ.get("GEMMA_DEVICE", "auto")
 
 # Whether to use Flash Attention if available
 USE_FLASH_ATTENTION = os.environ.get("USE_FLASH_ATTENTION", "True").lower() in ("true", "1", "t")
-
+# USE_FLASH_ATTENTION = 0
 # --- Model Generation Parameters ---
 
 # Temperature for generation (higher = more creative)
-TEMPERATURE = float(os.environ.get("TEMPERATURE", "0.7"))
+TEMPERATURE = float(os.environ.get("TEMPERATURE", "0.4"))
 
 # Top-p (nucleus) sampling parameter
-TOP_P = float(os.environ.get("TOP_P", "0.9"))
+TOP_P = float(os.environ.get("TOP_P", "0.85"))
 
 # Maximum new tokens to generate per response
 MAX_NEW_TOKENS = int(os.environ.get("MAX_NEW_TOKENS", "1400"))

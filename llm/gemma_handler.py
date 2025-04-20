@@ -24,7 +24,17 @@ class GemmaConversationHandler:
         """
         self.model = model
         self.tokenizer = tokenizer
+        if (
+            self.tokenizer.pad_token_id is None
+            or self.tokenizer.pad_token_id == self.tokenizer.eos_token_id
+        ):
+            self.tokenizer.add_special_tokens({"pad_token": "<|pad|>"})
+            # resize the language‑model head to include the new token
+            self.model.resize_token_embeddings(len(self.tokenizer))
 
+        # keep the model’s configs in sync
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id
+        self.model.generation_config.pad_token_id = self.tokenizer.pad_token_id
         # --- Store default generation params ---
         self.default_generation_params = default_generation_params if default_generation_params else {}
         # Set some basic defaults if none provided at all
@@ -33,7 +43,7 @@ class GemmaConversationHandler:
                  "max_new_tokens": 200,
                  "temperature": 0.7,
                  "top_p": 0.9,
-                 "do_sample": True,
+                 "do_sample": False,
                  "repetition_penalty": 1.1
              }
              logger.warning(f"No default generation params provided, using basic defaults: {self.default_generation_params}")
@@ -159,7 +169,8 @@ class GemmaConversationHandler:
 
         # Ensure essential params have some value
         gen_params.setdefault('max_new_tokens', 200)
-        gen_params.setdefault('pad_token_id', self.tokenizer.eos_token_id)
+        gen_params.setdefault('pad_token_id', self.tokenizer.pad_token_id)
+
 
 
         try:
@@ -178,17 +189,19 @@ class GemmaConversationHandler:
             inputs = self.tokenizer(
                 prompt,
                 return_tensors="pt",
-                add_special_tokens=False
+                add_special_tokens=False,
+                padding=True              # ← ensures .attention_mask exists
             ).to(device)
 
             # Generate response
             logger.info("Generating response...")
             with torch.no_grad():
                 outputs = self.model.generate(
-                    inputs.input_ids, # Pass input_ids directly
-                    # attention_mask=inputs.attention_mask, # Pass attention mask if needed/generated
-                    **gen_params # Pass combined generation parameters
-                )
+                inputs.input_ids,
+                attention_mask=inputs.attention_mask,   # crucial for stable logits
+                **gen_params
+            )
+
 
             # Extract only the newly generated tokens, not the prompt
             input_length = inputs.input_ids.shape[1]
